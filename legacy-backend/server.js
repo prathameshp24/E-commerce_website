@@ -19,12 +19,10 @@ const commonFeatureRouter = require("./routes/common/feature-routes");
 //create a database connection -> u can also
 //create a separate file for this and then import/use that file here
 
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ecommerce', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => console.log('MongoDB connected'))
-.catch(error => console.log('MongoDB connection error:', error));
+// After (remove deprecated options)
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/ecommerce')
+  .then(() => console.log('MongoDB connected'))
+  .catch(error => console.log('MongoDB connection error:', error));
 
 
 const app = express();

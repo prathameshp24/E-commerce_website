@@ -3,19 +3,25 @@ const Product = require("../../models/Product");
 
 const handleImageUpload = async (req, res) => {
   try {
-    const b64 = Buffer.from(req.file.buffer).toString("base64");
-    const url = "data:" + req.file.mimetype + ";base64," + b64;
-    const result = await imageUploadUtil(url);
+    // Verify file exists
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "No file uploaded"
+      });
+    }
 
+    const result = await imageUploadUtil(req.file);
+    
     res.json({
       success: true,
-      result,
+      result
     });
   } catch (error) {
-    console.log(error);
-    res.json({
+    console.error("Upload error:", error);
+    res.status(500).json({
       success: false,
-      message: "Error occured",
+      message: error.message || "Image upload failed"
     });
   }
 };

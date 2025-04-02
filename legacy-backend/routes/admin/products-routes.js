@@ -13,8 +13,11 @@ const { upload } = require("../../helpers/cloudinary");
 
 const router = express.Router();
 
-// Image handling routes
-router.post("/upload-image", upload.single("my_file"), handleImageUpload);
+router.post(
+  "/upload-image",
+  upload.single("my_file"), // Must match client's file field name
+  handleImageUpload
+);
 router.delete("/delete-image", handleImageDelete); // ADD THIS ROUTE
 
 // Product CRUD routes

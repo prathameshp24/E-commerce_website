@@ -12,23 +12,25 @@ cloudinary.config({
 // Memory storage configuration for multer
 const storage = new multer.memoryStorage();
 
-// Enhanced upload utility with validation and error handling
 async function imageUploadUtil(file) {
   try {
+    // Add validation
+    if (!file?.buffer) {
+      throw new Error("No file buffer received");
+    }
+
     const b64 = Buffer.from(file.buffer).toString("base64");
     const dataURI = `data:${file.mimetype};base64,${b64}`;
     
     const result = await cloudinary.uploader.upload(dataURI, {
       resource_type: "auto",
-      allowed_formats: ["jpg", "png", "jpeg", "webp"],
-      transformation: [{ width: 800, height: 600, crop: "limit" }],
-      folder: "ecommerce-products"
+      allowed_formats: ["jpg", "png", "jpeg", "webp"]
     });
     
-    return { success: true, result };
+    return result;
   } catch (error) {
-    console.error("Cloudinary upload error:", error);
-    return { success: false, error: error.message };
+    console.error("Cloudinary upload error:", error.message);
+    throw error; // Rethrow for controller handling
   }
 }
 
