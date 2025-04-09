@@ -18,7 +18,7 @@ app.use(cors({
 app.use(express.json());
 
 // Routes
-app.use('/api/products', productRoutes);
+app.use('/', productRoutes);
 
 app.listen(PORT, () => {
   console.log(`Product Service running on port ${PORT}`);

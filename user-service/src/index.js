@@ -20,7 +20,7 @@ app.use(cors({
 app.use(express.json());
 
 // Routes
-app.use('/api/auth', authRoutes);
+app.use('/', authRoutes);
 
 app.listen(port, () => {
   console.log(`User Service running on port ${port}`);
