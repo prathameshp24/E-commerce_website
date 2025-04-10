@@ -8,7 +8,7 @@ const authMiddleware = (req, res, next) => {
       return res.status(401).json({ 
         success: false, 
         message: "Authorization required" 
-      });
+      });x
     }
 
     // Verify token using User Service's secret

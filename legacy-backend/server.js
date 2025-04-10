@@ -46,10 +46,10 @@ app.use(
 app.use(cookieParser());
 app.use(express.json());
 app.use("/api/auth", authRouter);
-app.use("/api/admin/products", adminProductsRouter);
+app.use("/", adminProductsRouter);
 app.use("/api/admin/orders", adminOrderRouter);
 
-app.use("/api/shop/products", shopProductsRouter);
+app.use("/", shopProductsRouter);
 app.use("/api/shop/cart", shopCartRouter);
 app.use("/api/shop/address", shopAddressRouter);
 app.use("/api/shop/order", shopOrderRouter);

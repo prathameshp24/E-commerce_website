@@ -20,7 +20,7 @@ import { Fragment, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 const initialFormData = {
-  image: null,
+  image: "",
   title: "",
   description: "",
   category: "",
@@ -35,51 +35,15 @@ function AdminProducts() {
   const [openCreateProductsDialog, setOpenCreateProductsDialog] =
     useState(false);
   const [formData, setFormData] = useState(initialFormData);
-  const [imageFile, setImageFile] = useState(null);
+  const [imageFile, setImageFile] = useState("");
   const [uploadedImageUrl, setUploadedImageUrl] = useState("");
   const [imageLoadingState, setImageLoadingState] = useState(false);
   const [currentEditedId, setCurrentEditedId] = useState(null);
+  const [isImageUploaded, setIsImageUploaded] = useState(false);
 
   const { productList } = useSelector((state) => state.adminProducts);
   const dispatch = useDispatch();
   const { toast } = useToast();
-
-  function onSubmit(event) {
-    event.preventDefault();
-
-    currentEditedId !== null
-      ? dispatch(
-          editProduct({
-            id: currentEditedId,
-            formData,
-          })
-        ).then((data) => {
-          console.log(data, "edit");
-
-          if (data?.payload?.success) {
-            dispatch(fetchAllProducts());
-            setFormData(initialFormData);
-            setOpenCreateProductsDialog(false);
-            setCurrentEditedId(null);
-          }
-        })
-      : dispatch(
-          addNewProduct({
-            ...formData,
-            image: uploadedImageUrl,
-          })
-        ).then((data) => {
-          if (data?.payload?.success) {
-            dispatch(fetchAllProducts());
-            setOpenCreateProductsDialog(false);
-            setImageFile(null);
-            setFormData(initialFormData);
-            toast({
-              title: "Product add successfully",
-            });
-          }
-        });
-  }
 
   function handleDelete(getCurrentProductId) {
     dispatch(deleteProduct(getCurrentProductId)).then((data) => {
@@ -90,15 +54,81 @@ function AdminProducts() {
   }
 
   function isFormValid() {
-    return Object.keys(formData)
-      .filter((currentKey) => currentKey !== "averageReview")
-      .map((key) => formData[key] !== "")
-      .every((item) => item);
+    const requiredFieldsValid = Object.keys(formData)
+      .filter(key => key !== "averageReview" && key !== "salePrice")
+      .every(key => formData[key] !== "" && formData[key] !== null);
+
+    const imageValid = currentEditedId ? 
+      // For edit: either existing image or new upload
+      (formData.image || uploadedImageUrl) : 
+      // For new: must have uploaded image
+      (uploadedImageUrl && isImageUploaded);
+
+    return requiredFieldsValid && imageValid;
   }
 
-  useEffect(() => {
-    dispatch(fetchAllProducts());
-  }, [dispatch]);
+
+ // Add this useEffect to sync the uploaded image URL with formData
+useEffect(() => {
+  if (uploadedImageUrl) {
+    setFormData(prev => ({
+      ...prev,
+      image: uploadedImageUrl
+    }));
+  }
+}, [uploadedImageUrl]);
+
+function onSubmit(event) {
+  event.preventDefault();
+
+  // Final validation
+  if (!isFormValid()) {
+    toast({
+      title: "Validation Error",
+      description: "Please fill all required fields and upload an image",
+      variant: "destructive"
+    });
+    return;
+  }
+
+  const payload = {
+    ...formData,
+    image: uploadedImageUrl || formData.image,
+    price: Number(formData.price),
+    salePrice: formData.salePrice ? Number(formData.salePrice) : null,
+    totalStock: Number(formData.totalStock),
+    averageReview: Number(formData.averageReview)
+  };
+
+  // Clean payload from empty values
+  const cleanPayload = Object.fromEntries(
+    Object.entries(payload).filter(([_, v]) => v !== null && v !== "")
+  );
+
+  const action = currentEditedId 
+    ? editProduct({ id: currentEditedId, formData: cleanPayload })
+    : addNewProduct(cleanPayload);
+
+  dispatch(action).then((data) => {
+    if (data?.payload?.success) {
+      // Reset all states
+      setOpenCreateProductsDialog(false);
+      setCurrentEditedId(null);
+      setFormData(initialFormData);
+      setImageFile(null);
+      setUploadedImageUrl("");
+      setIsImageUploaded(false);
+      
+      // Refresh product list
+      dispatch(fetchAllProducts());
+      
+      toast({
+        title: `Product ${currentEditedId ? 'updated' : 'added'} successfully`,
+      });
+    }
+  });
+
+}
 
   console.log(formData, "productList");
 
@@ -136,24 +166,30 @@ function AdminProducts() {
               {currentEditedId !== null ? "Edit Product" : "Add New Product"}
             </SheetTitle>
           </SheetHeader>
+          // Update your ProductImageUpload component usage
           <ProductImageUpload
             imageFile={imageFile}
             setImageFile={setImageFile}
-            uploadedImageUrl={uploadedImageUrl}
-            setUploadedImageUrl={setUploadedImageUrl}
+            uploadedImageUrl={formData.image}
+            setUploadedImageUrl={(url) => {
+              setUploadedImageUrl(url);
+              setFormData(prev => ({ ...prev, image: url }));
+              setIsImageUploaded(true); // Mark upload as complete
+            }}
             setImageLoadingState={setImageLoadingState}
             imageLoadingState={imageLoadingState}
             isEditMode={currentEditedId !== null}
           />
+
           <div className="py-6">
-            <CommonForm
-              onSubmit={onSubmit}
-              formData={formData}
-              setFormData={setFormData}
-              buttonText={currentEditedId !== null ? "Edit" : "Add"}
-              formControls={addProductFormElements}
-              isBtnDisabled={!isFormValid()}
-            />
+          <CommonForm
+            onSubmit={onSubmit}
+            formData={formData}
+            setFormData={setFormData}
+            buttonText={currentEditedId !== null ? "Edit" : "Add"}
+            formControls={addProductFormElements}
+            isBtnDisabled={!isFormValid() || imageLoadingState} // Disable during upload
+          />
           </div>
         </SheetContent>
       </Sheet>

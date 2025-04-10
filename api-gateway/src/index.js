@@ -32,7 +32,7 @@ app.use('/api/shop/products', createProxyMiddleware({
   target: 'http://localhost:5003',  // Target base URL without path
   changeOrigin: true,
   pathRewrite: { 
-    '^/api/shop/products': '/api/products' // Correct path rewrite
+    '^/api/shop/products': '' // Correct path rewrite
   },
   onProxyReq: (proxyReq) => {
     console.log('Proxying to Product Service:', proxyReq.path);
@@ -44,10 +44,8 @@ app.use('/api', createProxyMiddleware({
   target: process.env.LEGACY_BACKEND_URL,
   changeOrigin: true,
   pathRewrite: { '^/api': '' },
-  onProxyReq: (proxyReq, req) => {
-    if (req.headers.authorization) {
-      proxyReq.setHeader('authorization', req.headers.authorization);
-    }
+  onProxyReq: (proxyReq) => {
+    console.log('Proxying to Image Service:', proxyReq.path);
   }
 }));
 
